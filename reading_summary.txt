@@ -1,0 +1,1 @@
+I read the 'Can AI (artificial intelligence) replace a SQL analyst' article. The summary of the article is that LLMs are great for writting, reviewing and debugging sql queries but noto so great at comprehending the direct and indirect relationships between different data schemas.

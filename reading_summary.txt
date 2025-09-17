@@ -1,1 +1,3 @@
 I read the 'Can AI (artificial intelligence) replace a SQL analyst' article. The summary of the article is that LLMs are great for writting, reviewing and debugging sql queries but noto so great at comprehending the direct and indirect relationships between different data schemas.
+
+I read about the “Little Book of Pipelines,” “Cumulative Table Design,” and the MapReduce model. I noticed that the first two focus on creating cleaner, more efficient pipelines by grouping sources and using incremental tables to avoid repetitive scanning. I also saw how MapReduce abstracts away the complexity of distributed systems, letting engineers focus on logic while the framework handles scaling and failures.

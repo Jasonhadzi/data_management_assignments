@@ -80,7 +80,7 @@ def load_csv_to_sql():
         insert_sql = """
         INSERT INTO BrandDetail 
         (BRAND_ID, BRAND_NAME, BRAND_TYPE, BRAND_URL_ADDR, INDUSTRY_NAME, SUBINDUSTRY_ID, SUBINDUSTRY_NAME)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
+        VALUES (%s, %s, %s, %s, %s, %s, %s)
         """
         
         data_tuples = [tuple(row) for row in df_brand.values]
@@ -98,7 +98,7 @@ def load_csv_to_sql():
         insert_sql = """
         INSERT INTO DailySpend 
         (BRAND_ID, BRAND_NAME, SPEND_AMOUNT, STATE_ABBR, TRANS_COUNT, TRANS_DATE, VERSION)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
+        VALUES (%s, %s, %s, %s, %s, %s, %s)
         """
         
         # Process in chunks

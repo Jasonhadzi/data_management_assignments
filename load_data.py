@@ -6,7 +6,7 @@ Loads CSV data into Azure SQL Database using pandas and pyodbc
 
 import os
 import pandas as pd
-import pyodbc
+import pymssql
 import sys
 
 def load_csv_to_sql():
@@ -22,21 +22,15 @@ def load_csv_to_sql():
         print("❌ Missing environment variables")
         sys.exit(1)
     
-    # Build connection string
-    connection_string = (
-        f"DRIVER={{ODBC Driver 18 for SQL Server}};"
-        f"SERVER={server};"
-        f"DATABASE={database};"
-        f"UID={username};"
-        f"PWD={password};"
-        f"Encrypt=yes;"
-        f"TrustServerCertificate=no;"
-        f"Connection Timeout=30;"
-    )
-    
     try:
         print("🔗 Connecting to Azure SQL Database...")
-        connection = pyodbc.connect(connection_string)
+        connection = pymssql.connect(
+            server=server,
+            database=database,
+            user=username,
+            password=password,
+            timeout=30
+        )
         cursor = connection.cursor()
         print("✅ Connected successfully!")
         

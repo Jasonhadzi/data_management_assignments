@@ -1,16 +1,20 @@
 #!/usr/bin/env python3
 """
-Minimal CSV Data Loader for Azure DevOps Pipeline
-Loads CSV data into Azure SQL Database using pandas and pyodbc
+Demo CSV Data Loader for Azure DevOps Pipeline
+Loads first 50 records from each CSV into Azure SQL Database for demonstration purposes
 """
 
 import os
 import pandas as pd
 import pymssql
 import sys
+from dotenv import load_dotenv
 
 def load_csv_to_sql():
-    """Load CSV files into Azure SQL Database"""
+    """Load CSV files into Azure SQL Database (Demo version - first 50 records only)"""
+    
+    # Load environment variables from .env file (for local testing)
+    load_dotenv()
     
     # Get connection parameters from environment variables
     server = os.getenv('AZURE_SERVER')
@@ -72,16 +76,17 @@ def load_csv_to_sql():
         connection.commit()
         print("✅ Tables created successfully!")
         
-        # Clear existing data to avoid primary key conflicts
-        print("🧹 Clearing existing data...")
+        # Clear existing data for demo purposes
+        print("🧹 Clearing existing data for demo...")
         cursor.execute("DELETE FROM DailySpend")
         cursor.execute("DELETE FROM BrandDetail")
         connection.commit()
         print("✅ Existing data cleared!")
         
-        # Load BrandDetail data
-        print("📊 Loading BrandDetail data...")
+        # Load BrandDetail data (first 50 records only)
+        print("📊 Loading BrandDetail data (first 50 records for demo)...")
         df_brand = pd.read_csv("brand-detail-url-etc_0_0_0.csv")
+        df_brand = df_brand.head(50)  # Only first 50 records
         df_brand = df_brand.fillna('')
         
         insert_sql = """
@@ -95,16 +100,17 @@ def load_csv_to_sql():
         connection.commit()
         print(f"✅ Loaded {len(data_tuples)} BrandDetail records")
         
-        # Load DailySpend data
-        print("📊 Loading DailySpend data...")
+        # Load DailySpend data (first 50 records that match BrandDetail brands)
+        print("📊 Loading DailySpend data (first 50 matching records for demo)...")
         df_spend = pd.read_csv("2021-01-19--data_01be88c2-0306-48b3-0042-fa0703282ad6_1304_5_0.csv")
         df_spend = df_spend.fillna(0)
         df_spend['TRANS_DATE'] = pd.to_datetime(df_spend['TRANS_DATE']).dt.date
         df_spend['VERSION'] = pd.to_datetime(df_spend['VERSION']).dt.date
         
-        # Filter DailySpend to only include brands that exist in BrandDetail
+        # Filter DailySpend to only include brands that exist in BrandDetail, then take first 50
         existing_brand_ids = set(df_brand['BRAND_ID'].tolist())
         df_spend = df_spend[df_spend['BRAND_ID'].isin(existing_brand_ids)]
+        df_spend = df_spend.head(50)  # Take first 50 matching records
         print(f"   Filtered DailySpend data: {len(df_spend)} rows (matching existing brands)")
         
         insert_sql = """
@@ -113,19 +119,10 @@ def load_csv_to_sql():
         VALUES (%s, %s, %s, %s, %s, %s, %s)
         """
         
-        # Process in chunks
-        chunk_size = 1000
-        total_inserted = 0
-        
-        for i in range(0, len(df_spend), chunk_size):
-            chunk = df_spend.iloc[i:i+chunk_size]
-            data_tuples = [tuple(row) for row in chunk.values]
-            cursor.executemany(insert_sql, data_tuples)
-            connection.commit()
-            total_inserted += len(data_tuples)
-            print(f"📈 Loaded chunk {i//chunk_size + 1}: {len(data_tuples)} records")
-        
-        print(f"✅ Loaded {total_inserted} DailySpend records")
+        data_tuples = [tuple(row) for row in df_spend.values]
+        cursor.executemany(insert_sql, data_tuples)
+        connection.commit()
+        print(f"✅ Loaded {len(data_tuples)} DailySpend records")
         
         # Verify data
         cursor.execute("SELECT COUNT(*) FROM BrandDetail")
@@ -135,8 +132,19 @@ def load_csv_to_sql():
         
         print(f"📊 Final counts: BrandDetail={brand_count}, DailySpend={spend_count}")
         
+        # Show sample data
+        print("\n📋 Sample BrandDetail data:")
+        cursor.execute("SELECT TOP 3 * FROM BrandDetail")
+        for row in cursor.fetchall():
+            print(f"   {row}")
+        
+        print("\n📋 Sample DailySpend data:")
+        cursor.execute("SELECT TOP 3 * FROM DailySpend")
+        for row in cursor.fetchall():
+            print(f"   {row}")
+        
         connection.close()
-        print("✅ Data loading completed successfully!")
+        print("✅ Demo data loading completed successfully!")
         
     except Exception as e:
         print(f"❌ Error: {e}")

@@ -40,6 +40,44 @@ def load_csv_to_sql():
         cursor = connection.cursor()
         print("✅ Connected successfully!")
         
+        # Create tables if they don't exist
+        print("📊 Creating database tables...")
+        
+        # Create BrandDetail table
+        brand_detail_sql = """
+        IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='BrandDetail' AND xtype='U')
+        CREATE TABLE BrandDetail (
+            BRAND_ID INT PRIMARY KEY,
+            BRAND_NAME NVARCHAR(255),
+            BRAND_TYPE NVARCHAR(100),
+            BRAND_URL_ADDR NVARCHAR(500),
+            INDUSTRY_NAME NVARCHAR(255),
+            SUBINDUSTRY_ID INT,
+            SUBINDUSTRY_NAME NVARCHAR(255)
+        )
+        """
+        
+        # Create DailySpend table
+        daily_spend_sql = """
+        IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='DailySpend' AND xtype='U')
+        CREATE TABLE DailySpend (
+            ID INT IDENTITY(1,1) PRIMARY KEY,
+            BRAND_ID INT,
+            BRAND_NAME NVARCHAR(255),
+            SPEND_AMOUNT DECIMAL(18,2),
+            STATE_ABBR NVARCHAR(10),
+            TRANS_COUNT DECIMAL(18,2),
+            TRANS_DATE DATE,
+            VERSION DATE,
+            FOREIGN KEY (BRAND_ID) REFERENCES BrandDetail(BRAND_ID)
+        )
+        """
+        
+        cursor.execute(brand_detail_sql)
+        cursor.execute(daily_spend_sql)
+        connection.commit()
+        print("✅ Tables created successfully!")
+        
         # Load BrandDetail data
         print("📊 Loading BrandDetail data...")
         df_brand = pd.read_csv("brand-detail-url-etc_0_0_0.csv")

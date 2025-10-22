@@ -43,21 +43,6 @@ steps:
     echo "✅ CSV files found successfully"
   displayName: 'Verify CSV files exist'
 
-- task: AzureCLI@2
-  displayName: 'Create database tables'
-  inputs:
-    azureSubscription: '$(azureSubscription)'
-    scriptType: 'bash'
-    scriptLocation: 'inlineScript'
-    inlineScript: |
-      # Create tables using Azure CLI
-      az sql db execute \
-        --resource-group $(resourceGroupName) \
-        --server $(sqlServerName) \
-        --database $(databaseName) \
-        --file-path create_tables_only.sql
-      echo "✅ Tables created successfully"
-
 - script: |
     # Set environment variables
     export AZURE_SERVER="$(sqlServerName)"

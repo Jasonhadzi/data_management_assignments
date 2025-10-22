@@ -72,6 +72,13 @@ def load_csv_to_sql():
         connection.commit()
         print("✅ Tables created successfully!")
         
+        # Clear existing data to avoid primary key conflicts
+        print("🧹 Clearing existing data...")
+        cursor.execute("DELETE FROM DailySpend")
+        cursor.execute("DELETE FROM BrandDetail")
+        connection.commit()
+        print("✅ Existing data cleared!")
+        
         # Load BrandDetail data
         print("📊 Loading BrandDetail data...")
         df_brand = pd.read_csv("brand-detail-url-etc_0_0_0.csv")
@@ -94,6 +101,11 @@ def load_csv_to_sql():
         df_spend = df_spend.fillna(0)
         df_spend['TRANS_DATE'] = pd.to_datetime(df_spend['TRANS_DATE']).dt.date
         df_spend['VERSION'] = pd.to_datetime(df_spend['VERSION']).dt.date
+        
+        # Filter DailySpend to only include brands that exist in BrandDetail
+        existing_brand_ids = set(df_brand['BRAND_ID'].tolist())
+        df_spend = df_spend[df_spend['BRAND_ID'].isin(existing_brand_ids)]
+        print(f"   Filtered DailySpend data: {len(df_spend)} rows (matching existing brands)")
         
         insert_sql = """
         INSERT INTO DailySpend 

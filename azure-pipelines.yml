@@ -1,0 +1,82 @@
+# Azure DevOps Pipeline - CSV Data Ingestion
+# This pipeline loads CSV data into Azure SQL Database
+
+trigger:
+- main
+
+variables:
+  pythonVersion: '3.12'
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+steps:
+- checkout: self
+  displayName: 'Checkout source code'
+
+- task: UsePythonVersion@0
+  displayName: 'Use Python $(pythonVersion)'
+  inputs:
+    versionSpec: '$(pythonVersion)'
+    addToPath: true
+
+- script: |
+    python -m pip install --upgrade pip
+    pip install pandas pyodbc
+  displayName: 'Install Python dependencies'
+
+- script: |
+    # Verify CSV files exist
+    echo "Checking for CSV files..."
+    ls -la *.csv
+    
+    if [ ! -f "brand-detail-url-etc_0_0_0.csv" ]; then
+      echo "Error: brand-detail-url-etc_0_0_0.csv not found"
+      exit 1
+    fi
+    
+    if [ ! -f "2021-01-19--data_01be88c2-0306-48b3-0042-fa0703282ad6_1304_5_0.csv" ]; then
+      echo "Error: 2021-01-19--data_01be88c2-0306-48b3-0042-fa0703282ad6_1304_5_0.csv not found"
+      exit 1
+    fi
+    
+    echo "✅ CSV files found successfully"
+  displayName: 'Verify CSV files exist'
+
+- task: AzureCLI@2
+  displayName: 'Create database tables'
+  inputs:
+    azureSubscription: '$(azureSubscription)'
+    scriptType: 'bash'
+    scriptLocation: 'inlineScript'
+    inlineScript: |
+      # Create tables using Azure CLI
+      az sql db execute \
+        --resource-group $(resourceGroupName) \
+        --server $(sqlServerName) \
+        --database $(databaseName) \
+        --file-path create_tables_only.sql
+      echo "✅ Tables created successfully"
+
+- script: |
+    # Set environment variables
+    export AZURE_SERVER="$(sqlServerName)"
+    export AZURE_DATABASE="$(databaseName)"
+    export AZURE_USERNAME="$(azureSqlUsername)"
+    export AZURE_PASSWORD="$(azureSqlPassword)"
+    
+    echo "Starting CSV data loading..."
+    python load_data.py
+  displayName: 'Load CSV data to Azure SQL'
+  env:
+    AZURE_SERVER: $(sqlServerName)
+    AZURE_DATABASE: $(databaseName)
+    AZURE_USERNAME: $(azureSqlUsername)
+    AZURE_PASSWORD: $(azureSqlPassword)
+
+- task: PublishBuildArtifacts@1
+  displayName: 'Publish pipeline logs'
+  condition: always()
+  inputs:
+    pathToPublish: '$(Agent.TempDirectory)'
+    artifactName: 'pipeline-logs'

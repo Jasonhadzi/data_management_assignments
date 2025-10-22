@@ -8,13 +8,20 @@ import os
 import pandas as pd
 import pymssql
 import sys
-from dotenv import load_dotenv
+
+# Optional import for local testing
+try:
+    from dotenv import load_dotenv
+    HAS_DOTENV = True
+except ImportError:
+    HAS_DOTENV = False
 
 def load_csv_to_sql():
     """Load CSV files into Azure SQL Database (Demo version - first 50 records only)"""
     
-    # Load environment variables from .env file (for local testing)
-    load_dotenv()
+    # Load environment variables from .env file (for local testing only)
+    if HAS_DOTENV:
+        load_dotenv()
     
     # Get connection parameters from environment variables
     server = os.getenv('AZURE_SERVER')

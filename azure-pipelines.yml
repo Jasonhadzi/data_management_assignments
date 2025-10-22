@@ -22,7 +22,7 @@ steps:
 
 - script: |
     python -m pip install --upgrade pip
-    pip install pandas pymssql
+    pip install pandas pymssql python-dotenv
   displayName: 'Install Python dependencies'
 
 - script: |
